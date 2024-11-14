@@ -1,0 +1,29 @@
+import requests
+import json
+
+# URL de la que obtendremos los datos
+url = "https://consumidores.pluxee.cl/locales/cabecera/16?latitude=-33.4569400&longitude=-70.6482700&originLatitude=&originLongitude=&distance=40000&searchField=&category=&notVisited=&favorite=&near=&priceFrom=&priceTo=&open=&pageNumber=&pageSize=&userId=&sortBy=&last=&_=1729102575387"  # Reemplaza con tu URL real
+
+# Realiza la solicitud a la URL
+response = requests.get(url)
+
+# Comprueba que la solicitud fue exitosa (código 200)
+if response.status_code == 200:
+    # Convierte los datos en formato JSON
+    data = response.json()
+
+    # Aquí asumimos que el JSON tiene una clave 'locales' que contiene los locales
+    # Y que cada local tiene 'latitude' y 'longitude'
+    coordenadas = [
+        {'lat': local['latitude'], 'lng': local['longitude']}
+        for local in data
+        if 'latitude' in local and 'longitude' in local
+    ]
+
+    # Guardar las coordenadas en un archivo JSON
+    with open('coordenadas_locales.json', 'w', encoding='utf-8') as file:
+        json.dump(coordenadas, file, ensure_ascii=False, indent=4)
+
+    print("Coordenadas guardadas en coordenadas_locales.json")
+else:
+    print(f"Error al hacer la solicitud a la URL, código de estado: {response.status_code}")
