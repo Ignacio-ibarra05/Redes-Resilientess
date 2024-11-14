@@ -1,0 +1,44 @@
+import json
+
+# Patrón base de la URL de las imágenes
+base_url = (
+    "https://stop.carabineros.cl/geoserver/stop/wms/?"
+    "service=WMS&request=GetMap&version=1.1.1&layers=stop%3ARobosFuerza"
+    "&styles=&format=image%2Fpng&transparent=true&info_format=application%2Fjson"
+    "&width=3540&height=40000&srs=EPSG%3A3857&bbox={xmin}%2C{ymin}%2C{xmax}%2C{ymax}"
+)
+
+# bbox=-7872187.4380048225%2C-3965008.4136084113%2C-7855275.7454967275%2C-3947810.0822442477
+
+# Rango de valores para el bounding box (bbox)
+x_min_values = [-7872187.0, -7865000.0]  # Ajusta estos valores
+x_max_values = [-7856078.0, -7860000.0]  # Ajusta estos valores
+y_min_values = [-3963226.0, -3960000.0]  # Ajusta estos valores
+y_max_values = [-3947028.0, -3950000.0]  # Ajusta estos valores
+
+# Lista para almacenar los datos de las imágenes
+images_data = []
+
+# Generar las URLs y almacenar los datos en la lista
+for xmin, xmax in zip(x_min_values, x_max_values):
+    for ymin, ymax in zip(y_min_values, y_max_values):
+        # Generar la URL de la imagen
+        image_url = base_url.format(xmin=xmin, ymin=ymin, xmax=xmax, ymax=ymax)
+
+        # Agregar los datos al diccionario
+        images_data.append({
+            "Link": image_url,
+            "BoundingBox": {
+                "xmin": xmin,
+                "ymin": ymin,
+                "xmax": xmax,
+                "ymax": ymax
+            }
+        })
+
+# Guardar los datos en un archivo JSON
+output_file = "imagenes_bbox.json"
+with open(output_file, "w", encoding="utf-8") as file:
+    json.dump(images_data, file, ensure_ascii=False, indent=4)
+
+print(f"Datos guardados en el archivo: {output_file}")

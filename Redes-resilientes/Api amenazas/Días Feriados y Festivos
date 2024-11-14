@@ -1,0 +1,31 @@
+import requests
+import json
+
+# URL de la API de Feriados Legales de Chile
+url = "https://apis.digital.gob.cl/fl/feriados"
+
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+}
+
+try:
+    # Realizar la solicitud GET a la API
+    response = requests.get(url, headers=headers, timeout=20)
+
+    response.raise_for_status()  # Verificar si la solicitud fue exitosa
+
+    # Obtener los datos en formato JSON
+    feriados = response.json()
+
+    # Guardar los datos en un archivo JSON
+    with open("feriados_chile.json", "w", encoding="utf-8") as file:
+        json.dump(feriados, file, ensure_ascii=False, indent=4)
+
+    print("Los datos se han guardado exitosamente en 'feriados_chile.json'.")
+
+except requests.exceptions.RequestException as e:
+    print(f"Error al realizar la solicitud a la API: {e}")
+except json.JSONDecodeError as e:
+    print(f"Error al decodificar la respuesta JSON: {e}")
+except Exception as e:
+    print(f"Se produjo un error: {e}")

@@ -1,0 +1,31 @@
+import os
+import json
+
+# Patrón base de la URL de las imágenes
+base_url = "https://app.nperf.com/signal-163635-14-{x}-{y}.webp"
+
+# Rango de valores que debes ajustar según el patrón visible en las URLs
+x_values = range(4900, 5000)  # Cambia estos valores según sea necesario
+y_values = range(9800, 9900)  # Cambia estos valores según sea necesario
+
+# Lista para almacenar los datos de las imágenes
+images_data = []
+
+# Generar las URLs y almacenar los datos en la lista
+for x in x_values:
+    for y in y_values:
+        # Generar la URL de la imagen
+        image_url = base_url.format(x=x, y=y)
+        # Agregar los datos al diccionario
+        images_data.append({
+            "Link": image_url,
+            "Parametro_X": x,
+            "Parametro_Y": y
+        })
+
+# Guardar los datos en un archivo JSON
+output_file = "imagenes_webp.json"
+with open(output_file, "w", encoding="utf-8") as file:
+    json.dump(images_data, file, ensure_ascii=False, indent=4)
+
+print(f"Datos guardados en el archivo: {output_file}")
