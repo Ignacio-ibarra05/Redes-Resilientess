@@ -10,29 +10,23 @@ La problemática identificada corresponde a la no clara información de que loca
 # MetaData
 Metadatos identificados para este proyecto:
 
-1.- Presupuesto comida
-APP pluxee
-
-2.- Horarios de Atención
+1.- Horarios de Atención
 https://www.google.com/maps/ 
 
-3.- Tipo de local
+2.- Tipo de local
 https://www.google.com/maps/ 
 
-4.- Locales que aceptan Junaeb
+3.- Locales que aceptan Junaeb
 https://consumidores.pluxee.cl/
 
 # Amenazas
 Amenazas Identificadas para el proyecto:
 
-1.- Cortes de calles
-https://www.transporteinforma.cl
+1.- Cobertura de red
+https://www.nperf.com/es/map/CL/-/-/signal?ll=20&lg=0&zoom=3
 
 2.- Robos en la zona
 https://stop.carabineros.cl
 
 3.- Días Feriados y Festivos
 https://apis.digital.gob.cl/fl/
-
-4.- Información de ruta de micros y disponibilidad
-https://www.red.cl/estado-del-servicio/
