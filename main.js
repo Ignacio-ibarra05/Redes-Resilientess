@@ -1,5 +1,5 @@
 // Crear el mapa centrado en una ubicación predeterminada
-const map = L.map('map').setView([-33.457, -70.649], 13); // Coordenadas de Santiago, Chile
+const map = L.map('map').setView([-33.457, -70.649], 13); // Coordenadas iniciales de Santiago, Chile
 
 // Agregar capa base de OpenStreetMap
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -102,6 +102,9 @@ function cargarGeoJSON(url, opciones = {}) {
 
 // Función para filtrar los locales por comuna
 function filtrarLocales(comuna) {
+    const selectorLocales = document.getElementById('locales');
+    selectorLocales.innerHTML = '<option value="">-- Selecciona un local --</option>'; // Resetear selector
+
     // Eliminar todos los marcadores del mapa
     localesMarkers.forEach(({ marker }) => map.removeLayer(marker));
 
@@ -109,10 +112,16 @@ function filtrarLocales(comuna) {
     if (comunas[comuna]) {
         const { polygon } = comunas[comuna];
 
-        localesMarkers.forEach(({ marker, coordinates }) => {
+        localesMarkers.forEach(({ marker, coordinates, id, name }) => {
             const latlng = L.latLng(coordinates[1], coordinates[0]);
             if (polygon.contains(latlng)) {
                 marker.addTo(map); // Agregar el marcador al mapa si está dentro del polígono
+
+                // Agregar el local al selector
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = name;
+                selectorLocales.appendChild(option);
             }
         });
     }
@@ -143,6 +152,10 @@ function crearFiltroComunas() {
             } else {
                 map.removeLayer(comunas[comuna].layer); // Ocultar capa
                 localesMarkers.forEach(({ marker }) => map.removeLayer(marker)); // Eliminar los marcadores
+
+                // Resetear el selector de locales
+                const selectorLocales = document.getElementById('locales');
+                selectorLocales.innerHTML = '<option value="">-- Selecciona un local --</option>';
             }
         });
 
@@ -173,9 +186,6 @@ function cargarLocales(url) {
                     <strong>Dirección:</strong> ${address}
                 `);
 
-                // Agregar el marcador al mapa
-                marker.addTo(map);
-
                 // Almacenar el marcador
                 localesMarkers.push({
                     id,
@@ -185,74 +195,9 @@ function cargarLocales(url) {
                     marker
                 });
             });
-
-            // Actualizar el selector con los locales cargados
-            actualizarSelectorLocales();
         })
         .catch((error) => console.error(`Error al cargar los locales: ${url}`, error));
 }
-
-// Función para actualizar el selector con los locales en localesMarkers
-function actualizarSelectorLocales() {
-    const selectorLocales = document.getElementById('locales');
-    selectorLocales.innerHTML = '<option value="">-- Selecciona un local --</option>'; // Resetear contenido
-
-    localesMarkers.forEach((local) => {
-        const option = document.createElement('option');
-        option.value = local.id;
-        option.textContent = local.name;
-        selectorLocales.appendChild(option);
-    });
-}
-
-// Función para calcular la ruta
-function calcularRuta() {
-    const selector = document.getElementById('locales');
-    const localSeleccionado = localesMarkers.find(
-        (local) => local.id === parseInt(selector.value)
-    );
-
-    if (!localSeleccionado) {
-        alert('Por favor, selecciona un local.');
-        return;
-    }
-
-    if (!userLocationMarker) {
-        alert('Por favor, establece tu ubicación primero.');
-        return;
-    }
-
-    const [localLng, localLat] = localSeleccionado.coordinates;
-
-    // Eliminar cualquier ruta previa
-    if (routingControl) {
-        map.removeControl(routingControl);
-    }
-
-    // Agregar una nueva ruta
-    routingControl = L.Routing.control({
-        waypoints: [
-            userLocationMarker.getLatLng(), // Ubicación del usuario
-            L.latLng(localLat, localLng) // Ubicación del local
-        ],
-        routeWhileDragging: true,
-        createMarker: function (i, waypoint, n) {
-            const icons = [
-                'https://cdn-icons-png.flaticon.com/512/447/447031.png', // Usuario
-                'https://cdn-icons-png.flaticon.com/512/149/149071.png' // Local
-            ];
-            return L.marker(waypoint.latLng, {
-                icon: L.icon({
-                    iconUrl: icons[i],
-                    iconSize: [30, 30]
-                })
-            });
-        }
-    }).addTo(map);
-}
-
-// Agregar evento al botón de calcular ruta
-document.getElementById('calcularRuta').addEventListener('click', calcularRuta);
 
 // Cargar los archivos GeoJSON
 cargarGeoJSON('https://raw.githubusercontent.com/caracena/chile-geojson/refs/heads/master/13.geojson'); // Archivo de comunas
