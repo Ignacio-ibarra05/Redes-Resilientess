@@ -12,71 +12,107 @@ let conexiones = [];
 let locales = {};
 
 // Cargar GeoJSON de calles (red vial)
-fetch('Api infraestructura/infraestructura.geojson')
+fetch('https://raw.githubusercontent.com/caracena/chile-geojson/refs/heads/master/13.geojson')
     .then(response => response.json())
     .then(data => {
-        // Procesar nodos de la red vial
-        data.features.forEach(features => {
-            const osmid = features.properties.osmid;
-            const coords = features.geometry.coordinates;
+        // Procesar nodos de la red vial y visualizarlos en clusters
+        const nodosCluster = L.markerClusterGroup();
+
+        data.features.forEach(feature => {
+            const osmid = feature.properties.osmid;
+            const coords = feature.geometry.coordinates;
             nodos[osmid] = coords;
 
-            // Visualizar nodos en el mapa
-            L.circleMarker([coords[1], coords[0]], {
+            // Añadir nodos al cluster
+            const marker = L.circleMarker([coords[1], coords[0]], {
                 radius: 5,
                 color: 'blue',
                 fillColor: '#3388ff',
                 fillOpacity: 0.8
-            }).bindPopup(`<strong>ID:</strong> ${osmid}`).addTo(map);
+            }).bindPopup(`<strong>ID:</strong> ${osmid}`);
+            nodosCluster.addLayer(marker);
         });
 
-        // Generar conexiones entre nodos de la red vial
-        generarConexiones(nodos, conexiones);
+        map.addLayer(nodosCluster);
+
+        // Generar conexiones de forma asíncrona
+        generarConexionesAsync(nodos, conexiones);
 
         // Cargar GeoJSON de locales comerciales
         return fetch('Api metadata/locales.geojson');
     })
     .then(response => response.json())
     .then(data => {
-        // Procesar los locales comerciales
-        data.features.forEach(features => {
-            const localId = features.properties.id;
-            const coords = features.geometry.coordinates;
+        // Procesar los locales comerciales y visualizarlos en clusters
+        const localesCluster = L.markerClusterGroup();
+
+        data.features.forEach(feature => {
+            const localId = feature.properties.id;
+            const coords = feature.geometry.coordinates;
             locales[localId] = coords;
 
-            // Conectar el local al nodo más cercano en la red vial
+            // Conectar el local al nodo más cercano
             const nodoCercano = encontrarNodoMasCercano(coords, nodos);
             conexiones.push([localId, nodoCercano]);
 
-            // Visualizar locales en el mapa
-            L.marker([coords[1], coords[0]], {
+            // Añadir locales al cluster
+            const marker = L.marker([coords[1], coords[0]], {
                 icon: L.icon({
                     iconUrl: 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
                     iconSize: [25, 25]
                 })
-            }).bindPopup(`<strong>Nombre:</strong> ${features.properties.name}<br>
-                          <strong>Dirección:</strong> ${features.ssproperties.address}`).addTo(map);
+            }).bindPopup(`
+                <strong>Nombre:</strong> ${feature.properties.name}<br>
+                <strong>Dirección:</strong> ${feature.properties.address}
+            `);
+            localesCluster.addLayer(marker);
         });
 
+        map.addLayer(localesCluster);
         console.log("Locales conectados al grafo.");
     })
     .catch(error => console.error("Error cargando GeoJSON:", error));
 
-// Función para generar conexiones entre nodos de la red vial
-function generarConexiones(nodos, conexiones) {
+// Función asíncrona para generar conexiones
+function generarConexionesAsync(nodos, conexiones) {
     const ids = Object.keys(nodos);
-    for (let i = 0; i < ids.length; i++) {
-        for (let j = i + 1; j < ids.length; j++) {
-            const id1 = ids[i];
-            const id2 = ids[j];
-            const distancia = calcularDistancia(nodos[id1], nodos[id2]);
+    let i = 0;
+    let j = 0;
 
-            // Establecer umbral para crear conexiones
-            if (distancia < 500) { // 500 metros
-                conexiones.push([id1, id2]);
+    function procesar() {
+        const start = performance.now();
+
+        while (i < ids.length) {
+            while (j < ids.length) {
+                if (i !== j) {
+                    const id1 = ids[i];
+                    const id2 = ids[j];
+                    const distancia = calcularDistancia(nodos[id1], nodos[id2]);
+
+                    if (distancia < 500) { // Umbral de 500 metros
+                        conexiones.push([id1, id2]);
+                    }
+                }
+                j++;
+                if (performance.now() - start > 16) break; // Evitar bloqueo
             }
+
+            if (j >= ids.length) {
+                i++;
+                j = i + 1;
+            }
+
+            if (performance.now() - start > 16) break;
+        }
+
+        if (i < ids.length) {
+            setTimeout(procesar, 0); // Continuar en el siguiente ciclo de eventos
+        } else {
+            console.log("Conexiones generadas");
         }
     }
+
+    procesar();
 }
 
 // Función para calcular la distancia entre dos coordenadas
@@ -115,7 +151,7 @@ function encontrarNodoMasCercano(coord, nodos) {
 }
 
 // Escuchar el evento de clic en el mapa para seleccionar un punto de inicio
-map.on('click', function(e) {
+map.on('click', function (e) {
     const lat = e.latlng.lat;
     const lon = e.latlng.lng;
 
