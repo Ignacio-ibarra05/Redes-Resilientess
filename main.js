@@ -87,7 +87,7 @@ selectorDiv.style.padding = '10px';
 selectorDiv.style.border = '1px solid #ccc';
 selectorDiv.style.zIndex = '1000';
 selectorDiv.style.fontFamily = 'Arial, sans-serif';
-selectorDiv.innerHTML = '<strong>Capas Información:</strong><br>';
+selectorDiv.innerHTML = '<strong>Capas Informacion:</strong><br>';
 document.body.appendChild(selectorDiv);
 
 // Llamadas para cargar tus archivos GeoJSON
