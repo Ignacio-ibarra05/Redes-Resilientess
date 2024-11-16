@@ -95,7 +95,7 @@ cargarGeoJSON('https://raw.githubusercontent.com/caracena/chile-geojson/refs/hea
     estilo: { color: 'red', weight: 1, dashArray: '5,5' }
 });
 
-cargarGeoJSON('locales.geojson', 'Locales Comerciales', {
+cargarGeoJSON('Api metadata/locales.geojson', 'Locales Comerciales', {
     icono: 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
     estilo: { color: 'blue', weight: 2 }
 });
