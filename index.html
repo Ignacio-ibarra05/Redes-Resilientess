@@ -7,12 +7,21 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
 </head>
 <body>
     <header>
         <h1>Mapa Interactivo de Rutas</h1>
+        <div class="menu-container">
+            <label for="locales">Selecciona un Local:</label>
+            <select id="locales">
+                <option value="">-- Selecciona un local --</option>
+            </select>
+            <button id="calcularRuta">Calcular Ruta</button>
+        </div> 
     </header>
-    <main>
+    <main>       
         <div id="map-container">
             <div id="map"></div>
         </div>
@@ -24,3 +33,4 @@
     <script src="main.js"></script>
 </body>
 </html>
+
