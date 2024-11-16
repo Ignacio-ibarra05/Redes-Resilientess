@@ -198,6 +198,54 @@ function cargarLocales(url) {
         })
         .catch((error) => console.error(`Error al cargar los locales: ${url}`, error));
 }
+// Función para calcular la ruta
+function calcularRuta() {
+    const selector = document.getElementById('locales');
+    const localSeleccionado = localesMarkers.find(
+        (local) => local.id === parseInt(selector.value)
+    );
+
+    if (!localSeleccionado) {
+        alert('Por favor, selecciona un local.');
+        return;
+    }
+
+    if (!userLocationMarker) {
+        alert('Por favor, establece tu ubicación primero.');
+        return;
+    }
+
+    const [localLng, localLat] = localSeleccionado.coordinates;
+
+    // Eliminar cualquier ruta previa
+    if (routingControl) {
+        map.removeControl(routingControl);
+    }
+
+    // Agregar una nueva ruta
+    routingControl = L.Routing.control({
+        waypoints: [
+            userLocationMarker.getLatLng(), // Ubicación del usuario
+            L.latLng(localLat, localLng) // Ubicación del local
+        ],
+        routeWhileDragging: true,
+        createMarker: function (i, waypoint, n) {
+            const icons = [
+                'https://cdn-icons-png.flaticon.com/512/447/447031.png', // Usuario
+                'https://cdn-icons-png.flaticon.com/512/149/149071.png' // Local
+            ];
+            return L.marker(waypoint.latLng, {
+                icon: L.icon({
+                    iconUrl: icons[i],
+                    iconSize: [30, 30]
+                })
+            });
+        }
+    }).addTo(map);
+}
+
+// Agregar evento al botón de calcular ruta
+document.getElementById('calcularRuta').addEventListener('click', calcularRuta);
 
 // Cargar los archivos GeoJSON
 cargarGeoJSON('https://raw.githubusercontent.com/caracena/chile-geojson/refs/heads/master/13.geojson'); // Archivo de comunas
