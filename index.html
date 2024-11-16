@@ -14,16 +14,15 @@
     </style>
 </head>
 <body>
-    <div id="map"></div>
-    
-    <!-- Formulario para ingresar punto de inicio y destino -->
+    <h1>Mapa Interactivo de Rutas</h1>
+    <div id="map" style="height: 600px;"></div>
+
+    <!-- Contenedor para la lista desplegable y el botón -->
     <div style="margin-top: 10px;">
-        <label for="inicio">Punto de Inicio (ID):</label>
-        <input type="text" id="inicio" placeholder="Ej: 314186496">
-        
-        <label for="fin">Punto de Destino (ID):</label>
-        <input type="text" id="fin" placeholder="Ej: 314186498">
-        
+        <label for="locales">Selecciona un Local:</label>
+        <select id="locales">
+            <option value="">-- Selecciona un local --</option>
+        </select>
         <button id="calcularRuta">Calcular Ruta</button>
     </div>
 
@@ -31,3 +30,4 @@
 </body>
 
 </html>
+
