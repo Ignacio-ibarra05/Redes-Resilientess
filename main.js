@@ -84,6 +84,6 @@ function cargarGeoJSON2(url, opciones = {}) {
 
 // Cargar el archivo GeoJSON desde el enlace proporcionado
 cargarGeoJSON2('https://raw.githubusercontent.com/caracena/chile-geojson/refs/heads/master/13.geojson', {
-    estilo: { color: 'green', weight: 1 }, // Estilo para líneas o polígonos
+    estilo: { color: 'green', weight: 2 }, // Estilo para líneas o polígonos
     icono: 'https://cdn-icons-png.flaticon.com/512/149/149071.png' // Icono para puntos (si aplica)
 });
