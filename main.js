@@ -6,7 +6,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: 'Map data © <a href="https://www.openstreetmap.org/">OpenStreetMap contributors'
 }).addTo(map);
 
-// Variables para nodos y conexiones
+// Variables para nodos, conexiones y locales
 let nodos = {};
 let conexiones = [];
 let locales = {};
@@ -39,7 +39,7 @@ fetch('https://raw.githubusercontent.com/caracena/chile-geojson/refs/heads/maste
         generarConexionesAsync(nodos, conexiones);
 
         // Cargar GeoJSON de locales comerciales
-        return fetch('Api metadata/locales.geojson');
+        return fetch('locales.geojson'); // Asegúrate de que esta ruta sea correcta
     })
     .then(response => response.json())
     .then(data => {
@@ -51,10 +51,6 @@ fetch('https://raw.githubusercontent.com/caracena/chile-geojson/refs/heads/maste
             const coords = feature.geometry.coordinates;
             locales[localId] = coords;
 
-            // Conectar el local al nodo más cercano
-            const nodoCercano = encontrarNodoMasCercano(coords, nodos);
-            conexiones.push([localId, nodoCercano]);
-
             // Añadir locales al cluster
             const marker = L.marker([coords[1], coords[0]], {
                 icon: L.icon({
@@ -62,14 +58,14 @@ fetch('https://raw.githubusercontent.com/caracena/chile-geojson/refs/heads/maste
                     iconSize: [25, 25]
                 })
             }).bindPopup(`
-                <strong>Nombre:</strong> ${feature.properties.name}<br>
-                <strong>Dirección:</strong> ${feature.properties.address}
+                <strong>Nombre:</strong> ${feature.properties.name || 'Sin nombre'}<br>
+                <strong>Dirección:</strong> ${feature.properties.address || 'Sin dirección'}
             `);
             localesCluster.addLayer(marker);
         });
 
         map.addLayer(localesCluster);
-        console.log("Locales conectados al grafo.");
+        console.log("Locales conectados al mapa.");
     })
     .catch(error => console.error("Error cargando GeoJSON:", error));
 
