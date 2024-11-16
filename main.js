@@ -6,96 +6,187 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: 'Map data © <a href="https://www.openstreetmap.org/">OpenStreetMap contributors'
 }).addTo(map);
 
-// Objeto para almacenar las capas de GeoJSON
-const capasGeoJSON = {};
+// Variables para almacenamiento
+const comunas = {}; // Almacenar capas por comuna
+const localesMarkers = []; // Almacenar marcadores de locales
+let userLocationMarker = null; // Almacenar el marcador de la ubicación del usuario
+
+function obtenerUbicacionUsuario() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                ubicarUsuarioEnMapa(latitude, longitude);
+            },
+            (error) => {
+                console.error('Error al obtener la ubicación del usuario:', error.message);
+                solicitarUbicacionManual();
+            }
+        );
+    } else {
+        alert('La geolocalización no está soportada en este navegador.');
+        solicitarUbicacionManual();
+    }
+}
+
+// Función para solicitar la ubicación manualmente
+function solicitarUbicacionManual() {
+    const latitud = parseFloat(prompt('Ingresa tu latitud:', '-33.457'));
+    const longitud = parseFloat(prompt('Ingresa tu longitud:', '-70.649'));
+
+    if (!isNaN(latitud) && !isNaN(longitud)) {
+        ubicarUsuarioEnMapa(latitud, longitud);
+    } else {
+        alert('Coordenadas inválidas. No se pudo establecer tu ubicación.');
+    }
+}
+
+// Función para ubicar al usuario en el mapa
+function ubicarUsuarioEnMapa(latitud, longitud) {
+    // Centrar el mapa en la ubicación del usuario
+    map.setView([latitud, longitud], 15);
+
+    // Agregar un marcador para la ubicación del usuario
+    if (userLocationMarker) {
+        map.removeLayer(userLocationMarker); // Eliminar marcador previo
+    }
+
+    userLocationMarker = L.marker([latitud, longitud], {
+        icon: L.icon({
+            iconUrl: 'https://cdn-icons-png.flaticon.com/512/447/447031.png',
+            iconSize: [30, 30]
+        })
+    }).bindPopup('<strong>Tu ubicación</strong>').addTo(map);
+}
 
 // Función para cargar y visualizar un archivo GeoJSON
-function cargarGeoJSON(url, nombre, opciones = {}) {
+function cargarGeoJSON(url, opciones = {}) {
     fetch(url)
         .then(response => response.json())
         .then(data => {
             // Crear una capa de GeoJSON
             const capaGeoJSON = L.geoJSON(data, {
-                style: opciones.estilo || {}, // Opcional: Estilo para geometrías
-                pointToLayer: (feature, latlng) => {
-                    return L.marker(latlng, {
-                        icon: L.icon({
-                            iconUrl: opciones.icono || 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
-                            iconSize: [25, 25]
-                        })
-                    });
-                },
+                style: opciones.estilo || { color: 'blue', weight: 2, fillOpacity: 0.2 },
                 onEachFeature: (feature, layer) => {
-                    // Agregar popup con las propiedades del elemento
+                    // Obtener el valor de la comuna
+                    const comuna = feature.properties.Comuna || 'Desconocida';
+
+                    // Crear la capa de la comuna si no existe
+                    if (!comunas[comuna]) {
+                        comunas[comuna] = {
+                            layer: L.layerGroup(),
+                            polygon: layer.getBounds() // Obtener el polígono de la comuna
+                        };
+                    }
+
+                    // Agregar el elemento a la capa de la comuna
+                    comunas[comuna].layer.addLayer(layer);
+
+                    // Agregar popup con propiedades
                     const propiedades = Object.entries(feature.properties || {})
                         .map(([key, value]) => `<strong>${key}:</strong> ${value}`)
                         .join('<br>');
                     layer.bindPopup(`
-                        <strong>Coordenadas:</strong> ${feature.geometry.coordinates.join(', ')}<br>
+                        <strong>Comuna:</strong> ${comuna}<br>
                         ${propiedades || 'Sin propiedades adicionales'}
                     `);
                 }
             });
 
-            // Almacenar la capa para control dinámico
-            capasGeoJSON[nombre] = capaGeoJSON;
-
-            // Añadir inicialmente la capa al mapa
-            capaGeoJSON.addTo(map);
-
-            // Crear una entrada en el selector
-            agregarSelector(nombre);
+            // Las capas de comunas no se agregan al mapa inicialmente
+            crearFiltroComunas();
         })
         .catch(error => console.error(`Error al cargar el archivo GeoJSON: ${url}`, error));
 }
 
-// Función para agregar una entrada al selector
-function agregarSelector(nombre) {
-    const selector = document.getElementById('selector');
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.id = nombre;
-    checkbox.checked = true;
+// Función para cargar los locales
+function cargarLocales(url) {
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            // Procesar cada local
+            data.features.forEach(feature => {
+                const { coordinates } = feature.geometry;
+                const { name, address, online_payment } = feature.properties;
 
-    const label = document.createElement('label');
-    label.htmlFor = nombre;
-    label.textContent = nombre;
+                // Crear un marcador para el local
+                const marker = L.marker([coordinates[1], coordinates[0]], {
+                    icon: L.icon({
+                        iconUrl: 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
+                        iconSize: [25, 25]
+                    })
+                }).bindPopup(`
+                    <strong>Nombre:</strong> ${name}<br>
+                    <strong>Dirección:</strong> ${address}<br>
+                    <strong>Pago Online:</strong> ${online_payment}<br>
+                    
+                `);
 
-    // Manejar el evento de cambio
-    checkbox.addEventListener('change', () => {
-        if (checkbox.checked) {
-            capasGeoJSON[nombre].addTo(map); // Agregar capa al mapa
-        } else {
-            map.removeLayer(capasGeoJSON[nombre]); // Quitar capa del mapa
-        }
-    });
-
-    // Añadir checkbox y etiqueta al selector
-    selector.appendChild(checkbox);
-    selector.appendChild(label);
-    selector.appendChild(document.createElement('br'));
+                // Almacenar el marcador
+                localesMarkers.push({
+                    marker,
+                    coordinates
+                });
+            });
+        })
+        .catch(error => console.error(`Error al cargar los locales: ${url}`, error));
 }
 
-// Contenedor para el selector
-const selectorDiv = document.createElement('div');
-selectorDiv.id = 'selector';
-selectorDiv.style.position = 'absolute';
-selectorDiv.style.top = '10px';
-selectorDiv.style.right = '10px';
-selectorDiv.style.backgroundColor = 'white';
-selectorDiv.style.padding = '10px';
-selectorDiv.style.border = '1px solid #ccc';
-selectorDiv.style.zIndex = '1000';
-selectorDiv.style.fontFamily = 'Arial, sans-serif';
-selectorDiv.innerHTML = '<strong>Capas Informacion:</strong><br>';
-document.body.appendChild(selectorDiv);
+// Función para filtrar los locales por comuna
+function filtrarLocales(comuna) {
+    // Eliminar todos los marcadores del mapa
+    localesMarkers.forEach(({ marker }) => map.removeLayer(marker));
 
-// Llamadas para cargar tus archivos GeoJSON
-cargarGeoJSON('https://raw.githubusercontent.com/caracena/chile-geojson/refs/heads/master/13.geojson', 'Infraestructura', {
-    estilo: { color: 'red', weight: 1, dashArray: '5,5' }
-});
+    // Si la comuna está habilitada, mostrar los locales dentro de su polígono
+    if (comunas[comuna]) {
+        const { polygon } = comunas[comuna];
 
-cargarGeoJSON('Api metadata/locales.geojson', 'Locales Comerciales', {
-    icono: 'https://cdn-icons-png.flaticon.com/512/149/149071.png',
-    estilo: { color: 'blue', weight: 2 }
-});
+        localesMarkers.forEach(({ marker, coordinates }) => {
+            const latlng = L.latLng(coordinates[1], coordinates[0]);
+            if (polygon.contains(latlng)) {
+                marker.addTo(map); // Agregar el marcador al mapa si está dentro del polígono
+            }
+        });
+    }
+}
+
+// Función para crear el filtro por comuna
+function crearFiltroComunas() {
+    const selector = document.getElementById('filtro-comunas');
+    selector.innerHTML = ''; // Limpiar contenido previo
+
+    // Ordenar las comunas alfabéticamente
+    const comunasOrdenadas = Object.keys(comunas).sort();
+
+    comunasOrdenadas.forEach(comuna => {
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = comuna;
+        checkbox.checked = false; // Inicia deshabilitada
+
+        const label = document.createElement('label');
+        label.htmlFor = comuna;
+        label.textContent = comuna;
+
+        checkbox.addEventListener('change', () => {
+            if (checkbox.checked) {
+                comunas[comuna].layer.addTo(map); // Mostrar capa
+                filtrarLocales(comuna); // Filtrar locales dentro de la comuna
+            } else {
+                map.removeLayer(comunas[comuna].layer); // Ocultar capa
+                localesMarkers.forEach(({ marker }) => map.removeLayer(marker)); // Eliminar los marcadores
+            }
+        });
+
+        selector.appendChild(checkbox);
+        selector.appendChild(label);
+        selector.appendChild(document.createElement('br'));
+    });
+}
+
+// Cargar los archivos GeoJSON
+cargarGeoJSON('https://raw.githubusercontent.com/caracena/chile-geojson/refs/heads/master/13.geojson'); // Archivo de comunas
+cargarLocales('Api metadata/locales.geojson'); // Archivo de locales
+
+// Llamar a la función para obtener la ubicación del usuario
+obtenerUbicacionUsuario();
