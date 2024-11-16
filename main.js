@@ -39,7 +39,7 @@ fetch('https://raw.githubusercontent.com/caracena/chile-geojson/refs/heads/maste
         generarConexionesAsync(nodos, conexiones);
 
         // Cargar GeoJSON de locales comerciales
-        return fetch('locales.geojson'); // Asegúrate de que esta ruta sea correcta
+        return fetch('Api metadata/locales.geojson');
     })
     .then(response => response.json())
     .then(data => {
