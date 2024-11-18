@@ -12,7 +12,6 @@ const localesMarkers = []; // Almacenar marcadores de locales
 let userLocationMarker = null; // Almacenar el marcador de la ubicación del usuario
 let routingControl = null; // Control de ruta
 
-// Función para obtener la ubicación del usuario
 function obtenerUbicacionUsuario() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -64,8 +63,8 @@ function ubicarUsuarioEnMapa(latitud, longitud) {
 // Función para cargar y visualizar un archivo GeoJSON
 function cargarGeoJSON(url, opciones = {}) {
     fetch(url)
-        .then((response) => response.json())
-        .then((data) => {
+        .then(response => response.json())
+        .then(data => {
             // Crear una capa de GeoJSON
             const capaGeoJSON = L.geoJSON(data, {
                 style: opciones.estilo || { color: 'blue', weight: 2, fillOpacity: 0.2 },
@@ -98,14 +97,11 @@ function cargarGeoJSON(url, opciones = {}) {
             // Las capas de comunas no se agregan al mapa inicialmente
             crearFiltroComunas();
         })
-        .catch((error) => console.error(`Error al cargar el archivo GeoJSON: ${url}`, error));
+        .catch(error => console.error(`Error al cargar el archivo GeoJSON: ${url}`, error));
 }
 
 // Función para filtrar los locales por comuna
 function filtrarLocales(comuna) {
-    const selectorLocales = document.getElementById('locales');
-    selectorLocales.innerHTML = '<option value="">-- Selecciona un local --</option>'; // Resetear selector
-
     // Eliminar todos los marcadores del mapa
     localesMarkers.forEach(({ marker }) => map.removeLayer(marker));
 
@@ -113,16 +109,10 @@ function filtrarLocales(comuna) {
     if (comunas[comuna]) {
         const { polygon } = comunas[comuna];
 
-        localesMarkers.forEach(({ marker, coordinates, id, name }) => {
+        localesMarkers.forEach(({ marker, coordinates }) => {
             const latlng = L.latLng(coordinates[1], coordinates[0]);
             if (polygon.contains(latlng)) {
                 marker.addTo(map); // Agregar el marcador al mapa si está dentro del polígono
-
-                // Agregar el local al selector
-                const option = document.createElement('option');
-                option.value = id;
-                option.textContent = name;
-                selectorLocales.appendChild(option);
             }
         });
     }
@@ -136,7 +126,7 @@ function crearFiltroComunas() {
     // Ordenar las comunas alfabéticamente
     const comunasOrdenadas = Object.keys(comunas).sort();
 
-    comunasOrdenadas.forEach((comuna) => {
+    comunasOrdenadas.forEach(comuna => {
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.id = comuna;
@@ -153,10 +143,6 @@ function crearFiltroComunas() {
             } else {
                 map.removeLayer(comunas[comuna].layer); // Ocultar capa
                 localesMarkers.forEach(({ marker }) => map.removeLayer(marker)); // Eliminar los marcadores
-
-                // Resetear el selector de locales
-                const selectorLocales = document.getElementById('locales');
-                selectorLocales.innerHTML = '<option value="">-- Selecciona un local --</option>';
             }
         });
 
@@ -187,6 +173,9 @@ function cargarLocales(url) {
                     <strong>Dirección:</strong> ${address}
                 `);
 
+                // Agregar el marcador al mapa
+                marker.addTo(map);
+
                 // Almacenar el marcador
                 localesMarkers.push({
                     id,
@@ -196,9 +185,74 @@ function cargarLocales(url) {
                     marker
                 });
             });
+
+            // Actualizar el selector con los locales cargados
+            actualizarSelectorLocales();
         })
         .catch((error) => console.error(`Error al cargar los locales: ${url}`, error));
 }
+
+// Función para actualizar el selector con los locales en localesMarkers
+function actualizarSelectorLocales() {
+    const selectorLocales = document.getElementById('locales');
+    selectorLocales.innerHTML = '<option value="">-- Selecciona un local --</option>'; // Resetear contenido
+
+    localesMarkers.forEach((local) => {
+        const option = document.createElement('option');
+        option.value = local.id;
+        option.textContent = local.name;
+        selectorLocales.appendChild(option);
+    });
+}
+
+// Función para calcular la ruta
+function calcularRuta() {
+    const selector = document.getElementById('locales');
+    const localSeleccionado = localesMarkers.find(
+        (local) => local.id === parseInt(selector.value)
+    );
+
+    if (!localSeleccionado) {
+        alert('Por favor, selecciona un local.');
+        return;
+    }
+
+    if (!userLocationMarker) {
+        alert('Por favor, establece tu ubicación primero.');
+        return;
+    }
+
+    const [localLng, localLat] = localSeleccionado.coordinates;
+
+    // Eliminar cualquier ruta previa
+    if (routingControl) {
+        map.removeControl(routingControl);
+    }
+
+    // Agregar una nueva ruta
+    routingControl = L.Routing.control({
+        waypoints: [
+            userLocationMarker.getLatLng(), // Ubicación del usuario
+            L.latLng(localLat, localLng) // Ubicación del local
+        ],
+        routeWhileDragging: true,
+        createMarker: function (i, waypoint, n) {
+            const icons = [
+                'https://cdn-icons-png.flaticon.com/512/447/447031.png', // Usuario
+                'https://cdn-icons-png.flaticon.com/512/149/149071.png' // Local
+            ];
+            return L.marker(waypoint.latLng, {
+                icon: L.icon({
+                    iconUrl: icons[i],
+                    iconSize: [30, 30]
+                })
+            });
+        }
+    }).addTo(map);
+}
+
+// Agregar evento al botón de calcular ruta
+document.getElementById('calcularRuta').addEventListener('click', calcularRuta);
 
 // Cargar los archivos GeoJSON
 cargarGeoJSON('https://raw.githubusercontent.com/caracena/chile-geojson/refs/heads/master/13.geojson'); // Archivo de comunas
