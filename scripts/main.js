@@ -100,23 +100,35 @@ function cargarGeoJSON(url, opciones = {}) {
         .catch(error => console.error(`Error al cargar el archivo GeoJSON: ${url}`, error));
 }
 
-// Función para filtrar los locales por comuna
 function filtrarLocales(comuna) {
     // Eliminar todos los marcadores del mapa
     localesMarkers.forEach(({ marker }) => map.removeLayer(marker));
+
+    // Obtener el selector de locales
+    const selectorLocales = document.getElementById('locales');
+    selectorLocales.innerHTML = '<option value="">-- Selecciona un local --</option>'; // Resetear contenido
 
     // Si la comuna está habilitada, mostrar los locales dentro de su polígono
     if (comunas[comuna]) {
         const { polygon } = comunas[comuna];
 
-        localesMarkers.forEach(({ marker, coordinates }) => {
+        localesMarkers.forEach(({ marker, coordinates, name, id }) => {
             const latlng = L.latLng(coordinates[1], coordinates[0]);
+
             if (polygon.contains(latlng)) {
-                marker.addTo(map); // Agregar el marcador al mapa si está dentro del polígono
+                // Agregar el marcador al mapa si está dentro del polígono
+                marker.addTo(map);
+
+                // Agregar el local al selector
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = name;
+                selectorLocales.appendChild(option);
             }
         });
     }
 }
+
 
 // Función para crear el filtro por comuna
 function crearFiltroComunas() {
