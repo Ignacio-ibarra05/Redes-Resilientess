@@ -52,30 +52,40 @@ main {
 
 .checkbox-overlay {
     position: absolute;
-    bottom: 5%; /* Separación desde el borde inferior del mapa */
-    right: 5%; /* Separación desde el borde derecho del mapa */
+    bottom: 5%;
+    right: 5%;
     background-color: white;
     border: 1px solid #ddd;
     border-radius: 5px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    padding: 1%; /* Espaciado interno adaptativo */
-    z-index: 1000; /* Asegura que esté sobre el mapa */
-    width: 20%; /* El ancho ocupa un 20% del mapa */
-    max-width: 300px; /* Limita el tamaño máximo si el mapa es muy grande */
-    min-width: 150px; /* Asegura un tamaño mínimo */
+    padding: 1%;
+    z-index: 1000;
+    width: 20%;
+    max-width: 300px;
+    min-width: 150px;
 }
 
-.checkbox-overlay input[type="checkbox"] {
-    margin-right: 5px;
+.checkbox-overlay h4 {
+    margin-top: 0;
+    font-size: 1em;
+    margin-bottom: 10px;
 }
 
-.checkbox-overlay label {
-    display: inline-block;
-    margin-bottom: 5px;
-    white-space: nowrap; /* Evita que las palabras se dividan en dos líneas */
+#estado-feriado {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #ddd;
+    font-size: 0.9em;
 }
-
-.leaflet-routing-container {
-    display: none !important;
+.checkbox-overlay {
+    position: absolute;
+    bottom: 5%;
+    right: 5%;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    z-index: 1000;
+    width: 20%;
+    text-align: left;
 }
-
