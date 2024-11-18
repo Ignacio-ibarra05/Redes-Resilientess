@@ -284,15 +284,47 @@ function cargarImagenesDesdeJSON(url) {
         .catch((error) => console.error(`Error al cargar las imágenes: ${url}`, error));
 }
 
+
+// JSON con los días feriados (puede ser cargado desde un archivo o API)
+const feriados = [];
+
+// Función para verificar si hoy es feriado
+function verificarFeriadoHoy() {
+    const hoy = new Date().toISOString().split('T')[0]; // Fecha actual en formato YYYY-MM-DD
+    const feriado = feriados.find(dia => dia.fecha === hoy); // Busca el feriado que coincide con la fecha actual
+    const estadoFeriado = document.getElementById('estado-feriado'); // Contenedor para el estado del feriado
+
+    if (feriado) {
+        estadoFeriado.innerHTML = `
+            <strong>Hoy es feriado:</strong> ${feriado.nombre} <br>
+            <em>(${feriado.tipo})</em>
+        `;
+    } else {
+        estadoFeriado.innerHTML = '<strong>Hoy no es feriado.</strong>';
+    }
+}
+
+// Llamar a la función al cargar la página
+document.addEventListener('DOMContentLoaded', verificarFeriadoHoy);
+fetch('Api amenazas/feriados_chile.json')
+    .then(response => response.json())
+    .then(data => {
+        feriados = data; // Reemplazar la variable feriados
+        verificarFeriadoHoy();
+    })
+    .catch(error => console.error('Error al cargar el JSON de feriados:', error));
+
+
+
 const capas = {
-    'Capa de Robos': L.tileLayer.wms('https://stop.carabineros.cl/geoserver/stop/wms/', {
+    ' Capa de Robos': L.tileLayer.wms('https://stop.carabineros.cl/geoserver/stop/wms/', {
         layers: 'stop:Robos',
         format: 'image/png',
         transparent: true,
         version: '1.1.1',
         srs: 'EPSG:3857'
     }),
-    'Capa de Robos Fuerza': L.tileLayer.wms('https://stop.carabineros.cl/geoserver/stop/wms/', {
+    ' Capa de Robos Fuerza': L.tileLayer.wms('https://stop.carabineros.cl/geoserver/stop/wms/', {
         layers: 'stop:RobosFuerza',
         format: 'image/png',
         transparent: true,
@@ -330,8 +362,22 @@ function crearCheckboxes() {
 // Crear los checkboxes al cargar la página
 crearCheckboxes();
 
-// Llamar a la función con la URL o ruta local del JSON
-//cargarImagenesDesdeJSON('Api amenazas/imagenes_webp.json');
+// Crear la capa de nPerf pero no agregarla al mapa aún
+const nPerfLayer = L.tileLayer('https://app.nperf.com/signal-163635-{z}-{x}-{y}.webp', {
+    attribution: 'Datos de cobertura © nPerf',
+    maxZoom: 18,
+    minZoom: 10,
+    tileSize: 256
+});
+
+// Vincular el checkbox para mostrar/ocultar la capa
+document.getElementById('capa-nperf').addEventListener('change', (event) => {
+    if (event.target.checked) {
+        nPerfLayer.addTo(map); // Agregar la capa al mapa
+    } else {
+        map.removeLayer(nPerfLayer); // Eliminar la capa del mapa
+    }
+});
 
 
 // Agregar evento al botón de calcular ruta
