@@ -88,3 +88,6 @@ main {
     width: 20%;
     text-align: left;
 }
+.leaflet-routing-container {
+    display: none !important;
+}
