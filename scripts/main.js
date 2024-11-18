@@ -263,6 +263,77 @@ function calcularRuta() {
     }).addTo(map);
 }
 
+// Función para cargar y superponer imágenes desde el JSON
+function cargarImagenesDesdeJSON(url) {
+    fetch(url)
+        .then((response) => response.json())
+        .then((data) => {
+            data.forEach((item) => {
+                const { Link, Parametro_X, Parametro_Y } = item;
+
+                // Define las esquinas para superponer la imagen
+                const bounds = [
+                    [Parametro_Y - 0.01, Parametro_X - 0.01], // Esquina superior izquierda
+                    [Parametro_Y + 0.01, Parametro_X + 0.01]  // Esquina inferior derecha
+                ];
+
+                // Agregar la imagen como una superposición
+                L.imageOverlay(Link, bounds).addTo(map);
+            });
+        })
+        .catch((error) => console.error(`Error al cargar las imágenes: ${url}`, error));
+}
+
+const capas = {
+    'Capa de Robos': L.tileLayer.wms('https://stop.carabineros.cl/geoserver/stop/wms/', {
+        layers: 'stop:Robos',
+        format: 'image/png',
+        transparent: true,
+        version: '1.1.1',
+        srs: 'EPSG:3857'
+    }),
+    'Capa de Robos Fuerza': L.tileLayer.wms('https://stop.carabineros.cl/geoserver/stop/wms/', {
+        layers: 'stop:RobosFuerza',
+        format: 'image/png',
+        transparent: true,
+        version: '1.1.1',
+        srs: 'EPSG:3857'
+    })
+};
+
+// Función para crear los checkboxes
+function crearCheckboxes() {
+    const controlsContainer = document.getElementById('layer-controls');
+    Object.keys(capas).forEach(nombreCapa => {
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = nombreCapa;
+
+        const label = document.createElement('label');
+        label.htmlFor = nombreCapa;
+        label.textContent = nombreCapa;
+
+        checkbox.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                capas[nombreCapa].addTo(map); // Agregar la capa al mapa
+            } else {
+                map.removeLayer(capas[nombreCapa]); // Eliminar la capa del mapa
+            }
+        });
+
+        controlsContainer.appendChild(checkbox);
+        controlsContainer.appendChild(label);
+        controlsContainer.appendChild(document.createElement('br'));
+    });
+}
+
+// Crear los checkboxes al cargar la página
+crearCheckboxes();
+
+// Llamar a la función con la URL o ruta local del JSON
+//cargarImagenesDesdeJSON('Api amenazas/imagenes_webp.json');
+
+
 // Agregar evento al botón de calcular ruta
 document.getElementById('calcularRuta').addEventListener('click', calcularRuta);
 
