@@ -379,7 +379,6 @@ document.getElementById('capa-nperf').addEventListener('change', (event) => {
     }
 });
 
-
 // Agregar evento al botón de calcular ruta
 document.getElementById('calcularRuta').addEventListener('click', calcularRuta);
 
