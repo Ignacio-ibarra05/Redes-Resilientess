@@ -24,8 +24,19 @@
     <main>       
         <div id="map-container">
             <div id="map"></div>
-            <div class="checkbox-overlay" id="layer-controls"></div>
+            <div class="checkbox-overlay" id="layer-controls">
+                <h4>Capas del Mapa</h4>
+                <div id="checkboxes-container">
+                    <!-- Aquí se generarán los checkboxes -->
+                </div>
+                <div id="estado-feriado">
+                    <!-- Aquí se indicará si es feriado o no -->
+                </div>
+                <input type="checkbox" id="capa-nperf" />
+                <label for="capa-nperf">Mostrar cobertura nPerf</label><br>
+            </div>
         </div>
+        
         <aside id="filtro-comunas">
             <h3>Filtrar por Comuna</h3>
             <!-- Los checkboxes de comunas se generarán dinámicamente -->
